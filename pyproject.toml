@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "falldetection"
+version = "0.1.0"
+description = "Fall detection and impact prediction system."
+authors = ["mrkaraaslan <developerkaraaslan@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "3.9"
+numpy = "^1.21.5"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
