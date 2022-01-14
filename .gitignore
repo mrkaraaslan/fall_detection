@@ -1,4 +1,8 @@
 .DS_STORE
 
+FallDataset
 datasets
 .venv
+
+foo.ipynb
+.ipynb_checkpoints
