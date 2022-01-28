@@ -3,6 +3,7 @@
 FallDataset
 .venv
 
+foo.py
 foo.ipynb
 .ipynb_checkpoints
 

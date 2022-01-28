@@ -40,7 +40,6 @@ def create_csv():
         data_columns.append(x + "_x")
         data_columns.append(x + "_y")
         data_columns.append(x + "_z")
-        data_columns.append(x + "_vis")  # visibility score
     data_columns.append("label")
 
     # get room directories
@@ -96,7 +95,7 @@ def create_csv():
                         landmarks = results.pose_landmarks.landmark
 
                         for i, j in zip(points, landmarks):
-                            temp += [j.x, j.y, j.z, j.visibility]
+                            temp += [j.x, j.y, j.z]
 
                         label = 0
                         if start < frame_counter < end:
