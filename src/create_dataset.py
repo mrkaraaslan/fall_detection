@@ -21,12 +21,12 @@ train_dir = "FallDataset/train"
 
 def create_csv():
     """
-    input: directly use global value 'train_dir'
-    return: void
+        This function uses given videos to create dataset using pose estimation.
+            - results are stored in 'Datasets' folder.
+            - cvs files named according to the RoomName and VideoName.
 
-    This function uses given videos to create dataset using pose estimation.
-    - results are stored in 'Datasets' folder
-    - cvs files named according to the RoomName and VideoName
+        @param : directly use global value 'train_dir'.
+        @return: void
     """
     # prepare for pose estimation
     mp_pose = mp.solutions.pose
