@@ -19,6 +19,8 @@ oe = OneHotEncoder()
 
 def get_label(label_arr):
     """
+        Decides label for given label array.
+
         @param label_arr: label array of step size long.
         @return
             is_valid: is given label array valid or not:
@@ -85,7 +87,7 @@ def set_data_label(main_dir, step_size):
             is_valid, f_label = get_label(sub_label)
             if is_valid:
                 lstm_data.append(sub_data)
-                lstm_label.append(sub_label)
+                lstm_label.append(f_label)
 
     # convert to numpy array
     lstm_data = np.array(lstm_data)
@@ -97,21 +99,43 @@ def set_data_label(main_dir, step_size):
     return lstm_data, lstm_label
 
 
-def set_model(step_size, num_features, num_outputs):
+def set_model(step_size, num_features):
+    """
+        Create and return model.
+            - Model has three layers:
+                - Input layer (num_features)
+                - LSTM layer (128)
+                - Dense layer - output (2)
+
+        @param step_size: step size for lstm model
+        @param num_features: number of features
+
+        @return model: Sequential LSTM model.
+    """
     model = Sequential()
     model.add(Input((step_size, num_features)))  # input layer
     model.add(LSTM(128))  # middle layer
-    model.add(Dense(num_outputs, activation="sigmoid"))  # output layer
+    model.add(Dense(2, activation="sigmoid"))  # output layer
     model.compile(optimizer="adam", loss="binary_crossentropy")
     return model
 
 
-def train_model(dataset_dir, step_size, num_features, num_out, num_epochs, batch_size, model_name):
+def train_model(dataset_dir, step_size, num_features, num_epochs, batch_size, model_name):
+    """
+        Train and save the fall detection model.
+
+        @param dataset_dir: main directory for datasets
+        @param step_size: step size for lstm model
+        @param num_features: number of features
+        @param num_epochs: epoch size of the lstm model
+        @param batch_size: batch sze of the lstm model
+        @param model_name: file name to save model
+    """
     # set data
     lstm_data, lstm_label = set_data_label(dataset_dir, step_size)
 
     # set model
-    lstm_model = set_model(step_size, num_features, num_out)
+    lstm_model = set_model(step_size, num_features)
 
     # train model
     lstm_model.fit(lstm_data, lstm_label, batch_size=batch_size, epochs=num_epochs, shuffle=False)
@@ -124,8 +148,8 @@ def train_model(dataset_dir, step_size, num_features, num_out, num_epochs, batch
 
 
 if __name__ == "__main__":
-    epochs = 100
+    epochs = 15
     batch = 64
     name = "v1_t1.h5"
 
-    train_model("FallDataset/train", 18, 99, 2, epochs, batch, name)
+    train_model("Datasets", 18, 99, epochs, batch, name)

@@ -59,7 +59,7 @@ def create_csv():
         # get fall start and fall end data from annotation file
         for vid in videos:
             # get corresponding annotation file
-            ann = ann_dir + "/" + vid.split("/")[-1][:-3] + "txt"  # videos and annotations have the same same
+            ann = ann_dir + "/" + vid.split("/")[-1][:-3] + "txt"  # videos and annotations have the same
 
             # read data from annotation file
             with open(ann) as _file:
@@ -116,7 +116,7 @@ def create_csv():
             video_name = vid.split("/")[-1]
             csv_name = "Datasets/" + folder_name + "/" + video_name[:-3] + "csv"
 
-            # create results directory if does not exists
+            # create results directory if it does not exist
             out_dir = "Datasets/" + folder_name
             if not os.path.exists(out_dir):
                 if not os.path.exists("Datasets"):
