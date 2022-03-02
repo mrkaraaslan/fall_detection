@@ -1,22 +1,13 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
-from contextlib import suppress
 from collections import Counter
 
-import cv2
-import mediapipe as mp
-
-import tensorflow as tf
-
-from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import Sequential
 from keras.layers import Input
 from keras.layers import Dense
 from keras.layers import LSTM
 
-from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
 
@@ -24,11 +15,6 @@ from additional_functions import list_dir, set_paths, eliminate_files
 
 scaler = MinMaxScaler(feature_range=(0, 1))
 oe = OneHotEncoder()
-
-# global arrangements
-# todo: remove global variables
-num_features = 99
-num_outputs = 2
 
 
 def get_label(label_arr):
@@ -111,5 +97,35 @@ def set_data_label(main_dir, step_size):
     return lstm_data, lstm_label
 
 
+def set_model(step_size, num_features, num_outputs):
+    model = Sequential()
+    model.add(Input((step_size, num_features)))  # input layer
+    model.add(LSTM(128))  # middle layer
+    model.add(Dense(num_outputs, activation="sigmoid"))  # output layer
+    model.compile(optimizer="adam", loss="binary_crossentropy")
+    return model
+
+
+def train_model(dataset_dir, step_size, num_features, num_out, num_epochs, batch_size, model_name):
+    # set data
+    lstm_data, lstm_label = set_data_label(dataset_dir, step_size)
+
+    # set model
+    lstm_model = set_model(step_size, num_features, num_out)
+
+    # train model
+    lstm_model.fit(lstm_data, lstm_label, batch_size=batch_size, epochs=num_epochs, shuffle=False)
+
+    # save model
+    model_path = "Models/" + model_name
+    if not os.path.exists("Models"):
+        os.mkdir("Models")
+    lstm_model.save(model_path)
+
+
 if __name__ == "__main__":
-    lstm_step_size = 18
+    epochs = 100
+    batch = 64
+    name = "v1_t1.h5"
+
+    train_model("FallDataset/train", 18, 99, 2, epochs, batch, name)
