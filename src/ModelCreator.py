@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import os
 from collections import Counter
 
 from keras.models import Sequential
@@ -120,7 +119,7 @@ def set_model(step_size, num_features):
     return model
 
 
-def train_model(dataset_dir, step_size, num_features, num_epochs, batch_size, model_name):
+def create_model(dataset_dir, step_size, num_features, num_epochs, batch_size, model_name):
     """
         Train and save the fall detection model.
 
@@ -141,15 +140,13 @@ def train_model(dataset_dir, step_size, num_features, num_epochs, batch_size, mo
     lstm_model.fit(lstm_data, lstm_label, batch_size=batch_size, epochs=num_epochs, shuffle=False)
 
     # save model
-    model_path = "Models/" + model_name
-    if not os.path.exists("Models"):
-        os.mkdir("Models")
+    model_path = "../Models/" + model_name
     lstm_model.save(model_path)
 
 
 if __name__ == "__main__":
-    epochs = 15
+    epochs = 100
     batch = 64
     name = "v1_t1.h5"
 
-    train_model("Datasets", 18, 99, epochs, batch, name)
+    create_model("Datasets", 18, 99, epochs, batch, name)
