@@ -12,7 +12,7 @@ scaler = MinMaxScaler(feature_range=(0, 1))
 
 def get_model(model_name):
     """
-        Load pretrained model.
+        Load pretrained model from ../Models directory
 
         @param model_name: name of the model to load.
         @return model: The model.
@@ -22,7 +22,7 @@ def get_model(model_name):
     return model
 
 
-def run_model_video(model_name, step_size, video_path):
+def run_model_video(model_name, step_size, video_path="0"):
     """
         Run model with the given video. Results will be saved under ../Model_run_results folder.
 
@@ -34,7 +34,7 @@ def run_model_video(model_name, step_size, video_path):
     model = get_model(model_name)
 
     # read video
-    video_capture = cv2.VideoCapture(video_path)
+    video_capture = cv2.VideoCapture(0 if video_path == "0" else video_path)
     width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     length = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -102,13 +102,25 @@ def run_model_video(model_name, step_size, video_path):
             # render as video
             out.write(frame)
 
+            if video_path == "0":
+                # set q as exit key
+                if cv2.waitKey(25) & 0xFF == ord('q'):
+                    break
+
+                cv2.imshow('Camera', frame)
+                cv2.setWindowProperty("Camera", cv2.WND_PROP_TOPMOST, 1)
+
             counter += 1
         else:
             break
 
     video_capture.release()
     out.release()
+    if video_path == "0":
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    run_model_video("v1_t1.h5", 18, "test_source/50_Ways_to_Fall.mp4")
+    # run_model_video("v1_t1.h5", 18, "test_source/50_Ways_to_Fall.mp4")
+    # camera
+    run_model_video("v1_t1.h5", 18)
