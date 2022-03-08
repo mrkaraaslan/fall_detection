@@ -1,6 +1,8 @@
 from os import listdir, path
 from contextlib import suppress
 
+from keras.models import load_model
+
 
 def list_dir(_path):
     """
@@ -46,3 +48,15 @@ def eliminate_files(_list):
             _list.remove(item)
 
     return _list
+
+
+def get_model(model_name):
+    """
+        Load pretrained model from ../Models directory
+
+        @param model_name: name of the model to load.
+        @return model: The model.
+    """
+    model_path = "../Models/" + model_name
+    model = load_model(model_path)
+    return model

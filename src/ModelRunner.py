@@ -5,21 +5,10 @@ from collections import deque
 import cv2
 import mediapipe as mp
 
-from keras.models import load_model
+from additional_functions import get_model
+
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(0, 1))
-
-
-def get_model(model_name):
-    """
-        Load pretrained model from ../Models directory
-
-        @param model_name: name of the model to load.
-        @return model: The model.
-    """
-    model_path = "../Models/" + model_name
-    model = load_model(model_path)
-    return model
 
 
 def run_model_video(model_name, step_size, video_path="0"):
