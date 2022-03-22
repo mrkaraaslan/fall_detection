@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import mediapipe as mp
 from collections import deque
+from collections import Counter
 from additional_functions import get_model
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(0, 1))
@@ -53,23 +54,28 @@ class FallDetector:
         mp_draw = mp.solutions.drawing_utils  # For drawing key points
 
         frames_for_model = deque(maxlen=18)
-        frame_counter = 1
-        none_counter = fall_counter = reject_counter = 0
+        last_predictions = deque(maxlen=18)
+        state = ""
+
+        none_counter = 0
+        frame_counter = 0
         while cap.isOpened():
             # to follow progress
+            frame_counter += 1
             if frame_counter % 20 == 0:
                 print("\rProgress:{0}|{1}".format(frame_counter, (length if video_path != "0" else "∞")), end='')
-            frame_counter += 1
 
             # read one frame from video or camera
             success, frame = cap.read()
-            if success:
+            if success:  # view is successfully taken
                 # make pose estimation
                 pose_est = []
                 img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = pose.process(img_rgb)
 
-                if results.pose_landmarks:
+                if results.pose_landmarks:  # there is a person in the view
+                    none_counter = 0
+
                     landmarks = results.pose_landmarks.landmark
 
                     # set points data
@@ -84,50 +90,56 @@ class FallDetector:
                     top_point = (int(pose_est[0] * width), int(pose_est[1] * height))  # nose
                     rec_h = abs(top_point[1] - bottom_point[1])
                     rec_w = abs(top_point[0] - bottom_point[0])
+                    rec_w += 1 if rec_w == 0 else 0
+                    body_angle = np.rad2deg(np.arctan(rec_h / rec_w))
 
                     # draw pose estimation and shape rectangle
                     if with_output or (show_camera and video_path == "0"):
                         mp_draw.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                         cv2.rectangle(frame, bottom_point, top_point, (0, 255, 0), 2)
 
-                    fall = "----"
                     if len(frames_for_model) == frames_for_model.maxlen:
                         # prepare data for model
                         dat = np.asarray(frames_for_model)
                         dat = scaler.fit_transform(dat)
                         dat = np.array([dat])
 
-                        prediction = self.__model.predict(dat).argmax(1)
-                        # count fall predictions
-                        if prediction == 1:
-                            fall_counter += 1
-                        else:
-                            fall_counter = 0
-                            fall = "NO"
+                        prediction = self.__model.predict(dat).argmax(1)[0]
+                        # using predictions and body shape final decision will be made.
+                        last_predictions.append(prediction)
+                        prediction_counts = Counter(last_predictions)
 
-                        # count rejected predictions
-                        if rec_h > 2 * rec_w:  # todo: can we use angle?
-                            reject_counter += 1
-                        else:
-                            reject_counter = 0
+                        the_decision = False  # final decision -> keep this till the end even if it is unnecessary
+                        if prediction_counts[1] >= last_predictions.maxlen / 3 * 2:
+                            the_decision = True  # prediction -> fallen
+                        else:  # prediction -> not fallen
+                            if not (state == "Fallen" and body_angle <= 30):
+                                state = "Daily"
 
-                        if fall_counter == frames_for_model.maxlen / 3 * 2 + 1:
-                            if reject_counter >= fall_counter / 2:
-                                fall = "REJ"
-                            else:
-                                fall = "FALL DETECTED"
+                        if the_decision:
+                            if body_angle >= 70:  # standing -> reject fall
+                                the_decision = False
+                                state = "Daily"
+                            elif body_angle >= 30:  # falling -> approve fall
+                                if state != "Fallen":
+                                    state = "Falling"
+                            else:  # fallen -> approve fall
+                                state = "Fallen"
 
-                        # put prediction on the result
+                        # put state on the result
                         if with_output or (video_path == 0 and show_camera):
                             # specify the font and write using putText
                             font = cv2.FONT_HERSHEY_SIMPLEX
-                            cv2.putText(frame, fall, (10, height - 20), font, 1, (255, 0, 0), 2, cv2.LINE_AA)
-                else:
+                            txt = str(frame_counter) + " " + state + " " + str(the_decision) + " " + str(body_angle)
+                            cv2.putText(frame, txt, (10, height - 20), font, 1, (255, 0, 0), 2, cv2.LINE_AA)
+                else:  # no one in the view
                     # if view is empty clear old data
                     none_counter += 1
                     if none_counter == frames_for_model.maxlen / 3 * 2:
                         none_counter = 0
                         frames_for_model.clear()
+                        last_predictions.clear()
+                        state = ""
 
                 if with_output:
                     # render as video
