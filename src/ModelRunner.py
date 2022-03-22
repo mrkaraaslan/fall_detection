@@ -78,7 +78,7 @@ def run_model_video(model_name, step_size, video_path="0"):
                 dat = scaler.fit_transform(dat)
                 dat = np.array([dat])
 
-                prediction = model.predict(dat).argmax(1)
+                prediction = model.predict(dat).argmax(1)[0]
                 if prediction == 1:
                     fall = "Detected Fall"
                 else:
