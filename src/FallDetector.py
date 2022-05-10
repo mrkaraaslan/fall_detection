@@ -113,7 +113,7 @@ class FallDetector:
                         if prediction_counts[1] >= last_predictions.maxlen / 3 * 2:
                             the_decision = True  # prediction -> fallen
                         else:  # prediction -> not fallen
-                            if not (state == "Fallen" and body_angle <= 30):
+                            if not (state == "Fallen" and body_angle <= 70):
                                 state = "Daily"
 
                         if the_decision:
