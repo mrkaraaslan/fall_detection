@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(0, 1))
 
 
-class FallDetector:
+class FallDetection:
     def __init__(self, model_name):
         self.__model_name = model_name
         self.__model = get_model(model_name)
@@ -157,5 +157,5 @@ class FallDetector:
 
 
 if __name__ == "__main__":
-    detector = FallDetector("v1_t1.h5")
+    detector = FallDetection("v1_t1.h5")
     detector.detect(video_path="test_source/50_Ways_to_Fall.mp4", with_output=True)
