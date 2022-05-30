@@ -2,16 +2,15 @@
 
 # import os
 import cv2
-# import numpy as np
-# import mediapipe as mp
+from numpy import asarray, array
+# import mediapipe  # I don't know why but sometimes does not work when this part is commented
 from collections import deque
-# from collections import Counter
-from additional_functions import get_model
 from sklearn.preprocessing import MinMaxScaler
 from typing import Optional
 
 from InputSource import InputSource
 from PoseEstimator import PoseEstimator
+from FallDetector import FallDetector
 
 scaler = MinMaxScaler(feature_range=(0, 1))
 
@@ -19,15 +18,6 @@ scaler = MinMaxScaler(feature_range=(0, 1))
 class OutputCreator:
     def __init__(self):
         pass
-
-
-class FallDetector:
-    def __init__(self, fall_model_name):
-        self.__fall_model = get_model(fall_model_name)
-
-    def detect(self, pose_data):
-        pass
-
 
 
 class ImpactPredictor:
@@ -63,7 +53,17 @@ class TheDetector:
 
             if len(self.__poses_for_fall_model) == 18:
                 # send to fall detection model
-                pass
+                data = asarray(self.__poses_for_fall_model)
+                data = scaler.fit_transform(data)
+                data = array([data])
+                self.__fall_detector.detect(data, self.__pose_estimator.body_angle)
+
+                if self.__fall_detector.fall_detected:
+                    # send poses_for_model to impact prediction model by looking
+                    # the state of fall detection model
+                    # it can be early to send when the state is "Falling"
+                    # todo: these part can be used to create impact prediction dataset
+                    pass
 
             # set q as exit key
             if cv2.waitKey(25) & 0xFF == ord('q'):
