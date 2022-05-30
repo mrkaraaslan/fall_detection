@@ -55,5 +55,9 @@ class PoseEstimator:
         return frame
 
     @property
-    def get_pose_estimation(self):
+    def pose_estimation(self):
         return self.__pose_est
+
+    @property
+    def body_angle(self):
+        return self.__body_angle

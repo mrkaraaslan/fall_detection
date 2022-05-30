@@ -1,11 +1,11 @@
 # This is the final result where fall detection and impact prediction models will run together
 
-import os
+# import os
 import cv2
-import numpy as np
-import mediapipe as mp
+# import numpy as np
+# import mediapipe as mp
 from collections import deque
-from collections import Counter
+# from collections import Counter
 from additional_functions import get_model
 from sklearn.preprocessing import MinMaxScaler
 from typing import Optional
@@ -22,8 +22,12 @@ class OutputCreator:
 
 
 class FallDetector:
-    def __init__(self):
+    def __init__(self, fall_model_name):
+        self.__fall_model = get_model(fall_model_name)
+
+    def detect(self, pose_data):
         pass
+
 
 
 class ImpactPredictor:
@@ -32,23 +36,34 @@ class ImpactPredictor:
 
 
 class TheDetector:
-    def __init__(self, fall_model_name, impact_model_name):
-        self.__fall_model = get_model(fall_model_name)
+    def __init__(self, fall_model_name):  # , impact_model_name):
         # self.__impact_model = get_model(impact_model_name)
         self.__input_source: Optional[InputSource] = None
         self.__pose_estimator: Optional[PoseEstimator] = None
+        self.__fall_detector = FallDetector(fall_model_name)
 
         self.__poses_for_fall_model = deque(maxlen=18)
+        self.__none_counter = 0
 
     # this is the main function where everything runs
     # input_source: video name or nothing to use camera
-    def run(self, input_source=None, save_result=False):
+    def run(self, input_source=None):  # , save_result=False):
         self.initialize(input_source)
 
         for frame in self.__input_source.feed():
             if self.__pose_estimator.estimate(frame):  # True if there is a person in the view
-                pose_est = self.__pose_estimator.get_pose_estimation
+                self.__none_counter = 0
+                self.__poses_for_fall_model.append(self.__pose_estimator.pose_estimation)
                 frame = self.__pose_estimator.draw(frame)
+            else:
+                self.__none_counter += 1
+                if self.__none_counter == 9:
+                    self.__none_counter = 0
+                    self.__poses_for_fall_model.clear()
+
+            if len(self.__poses_for_fall_model) == 18:
+                # send to fall detection model
+                pass
 
             # set q as exit key
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -64,5 +79,5 @@ class TheDetector:
 
 
 if __name__ == "__main__":
-    the_detector = TheDetector(fall_model_name="v1_t1.h5", impact_model_name="")
+    the_detector = TheDetector(fall_model_name="v1_t1.h5")  # , impact_model_name="")
     the_detector.run()
