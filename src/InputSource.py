@@ -19,6 +19,8 @@ class InputSource:
             success, frame = self.__source.read()
             if success:
                 yield frame
+            else:
+                self.__source.release()  # close video when it ends
 
     @property
     def width(self):

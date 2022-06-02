@@ -25,6 +25,9 @@ class FallDetector:
             else:  # fallen -> approve fall
                 self.__txt_decision = "Fallen"
                 self.__final_decision = True
+        elif not (self.__txt_decision == "Fallen" and body_angle <= 70):
+            self.__txt_decision = "Daily"
+            self.__final_decision = False
 
     @property
     def fall_detected(self):
