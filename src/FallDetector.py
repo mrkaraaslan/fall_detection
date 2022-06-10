@@ -12,9 +12,8 @@ class FallDetector:
     def detect(self, pose_data, body_angle):
         prediction = self.__fall_model.predict(pose_data).argmax(1)[0]
         self.__last_predictions.append(prediction)
-        self.__txt_decision = "Detecting"
         ctr = Counter(self.__last_predictions)
-        if ctr[1] > 9:  # there is a fall -> decide state: falling or fallen
+        if ctr[1] >= 9:  # there is a fall -> decide state: falling or fallen
             if body_angle >= 70:  # -> reject fall
                 self.__txt_decision = "Daily"
                 self.__final_decision = False
@@ -36,3 +35,6 @@ class FallDetector:
     @property
     def state(self):
         return self.__txt_decision
+
+    def reset(self):
+        self.__last_predictions.clear()
