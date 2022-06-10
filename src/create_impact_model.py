@@ -8,6 +8,8 @@ from keras.layers import LSTM
 
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score
 
 from additional_functions import list_dir
 
@@ -23,12 +25,12 @@ def set_data_label(_data_dir, _step_size):
         _label = folder[0]
         files = list_dir(_data_dir + "/" + folder)
         for file in files:
-            data = pd.read_csv(_data_dir + "/" + folder + "/" + file).values
-            data = scaler.fit_transform(data)
+            _data = pd.read_csv(_data_dir + "/" + folder + "/" + file).values
+            _data = scaler.fit_transform(_data)
 
             end_index = _step_size
-            for i in range(0, len(data) - end_index):
-                _lstm_data.append(data[i:i + end_index])
+            for i in range(0, len(_data) - end_index):
+                _lstm_data.append(_data[i:i + end_index])
                 _lstm_label.append(_label)
 
     # convert to numpy array
@@ -40,37 +42,64 @@ def set_data_label(_data_dir, _step_size):
 
 
 def set_impact_model(_step_size, _num_features, _num_labels):
-    model = Sequential()
-    model.add(Input((_step_size, _num_features)))  # input layer
-    model.add(LSTM(128))  # middle layer
-    model.add(Dense(_num_labels, activation="sigmoid"))  # output layer
-    model.compile(optimizer="adam", loss="binary_crossentropy")
-    return model
+    _model = Sequential()
+    _model.add(Input((_step_size, _num_features)))  # input layer
+    _model.add(LSTM(128))  # middle layer
+    _model.add(Dense(_num_labels, activation="sigmoid"))  # output layer
+    _model.compile(optimizer="adam", loss="binary_crossentropy")
+    return _model
 
 
-def create_impact_model(_dataset_dir, _step_size, _num_features, _num_labels, _num_epochs, _batch_size, _model_name):
-    # set data
-    lstm_data, lstm_label = set_data_label(_dataset_dir, _step_size)
+def create_model(_tr_data, _tr_label, _step_size, _num_features, _num_labels, _num_epochs, _batch_size, _model_name):
+    _model = set_impact_model(_step_size, _num_features, _num_labels)
+    _model.fit(_tr_data, _tr_label, batch_size=_batch_size, epochs=_num_epochs, shuffle=False)
 
-    # set model
-    lstm_model = set_impact_model(_step_size, _num_features, _num_labels)
-
-    # train model
-    lstm_model.fit(lstm_data, lstm_label, batch_size=_batch_size, epochs=_num_epochs, shuffle=False)
-
-    # save model
     model_path = "../Models/" + _model_name
-    lstm_model.save(model_path)
+    _model.save(model_path)
+    return _model
 
 
 if __name__ == "__main__":
-    # what do I need
-    # - dataset directory -> im_dat/train/
-    # - step size -> try 12
-    # - number of features -> 99
-    # - number of labels -> 4
-    # - number of epochs -> try 100
-    # - batch size -> try 64
-    # - model name -> impact_model.h5
-    # - model directory -> ../Models/
-    create_impact_model("im_dat/train", 12, 99, 4, 100, 64, "impact_model.h5")
+    names = ["im1.h5", "im2.h5", "im3.h5", "im4.h5"]
+    cv = KFold(n_splits=4, random_state=1, shuffle=True)
+    # dataset:
+    # 133 video data -> 18 frame
+    # step size = 12  -> 6 samples from each video
+    # 9576 samples for training
+    # 3192 samples for testing
+
+    scores = {}
+    data, labels = set_data_label("im_dat_csv", 12)
+
+    for (train_index, test_index), name in zip(cv.split(data), names):
+        X_train, X_test = data[train_index], data[test_index]
+        y_train, y_test = labels[train_index], labels[test_index]
+
+        model = create_model(X_train, y_train, 12, 99, 4, 100, 64, name)
+        predicted = []
+
+        print("predicting...")
+        for test in X_test:
+            pr = model.predict(np.array([test])).argmax(1)[0]
+            predicted.append(pr)
+
+        y_test = np.argmax(y_test, axis=1)
+
+        print("scoring...")
+        acc = accuracy_score(predicted, y_test)
+        scores[name] = acc
+
+    score = 0
+    for name in names:
+        score += scores[name]
+        print(name, scores[name])
+    print("\navg=", score/4)
+
+# Results of current models:
+#
+# im1_12.h5 0.97
+# im2_12.h5 0.98
+# im3_12.h5 1.0
+# im4_12.h5 0.9899497487437185
+#
+# avg= 0.9849874371859297
